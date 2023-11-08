@@ -348,6 +348,7 @@ void periodicEvents(void * pvParameters){
   TickType_t xLastWakeTime;
   xLastWakeTime = xTaskGetTickCount();
 
+  int task_counter = 0;
   while (1){ 
     ScanMinibadges();
 
@@ -360,6 +361,18 @@ void periodicEvents(void * pvParameters){
       digitalWrite(MINIBADGE_CLK_CTRL_L_PIN, LOW);
     }
 
+    // only run battery check once a minute
+    if(task_counter > 60) {
+      task_counter = 0;
+      double voltage = ((double)analogRead(BATTERY_SENSE_PIN) * 33) / 40960;
+      // USB voltage sometimes appears as 0.2-0.3 volts, ignore
+      if(voltage > 0.4 && voltage < 2.2) {
+        leds[0] = CRGB::Red;
+        FastLED.show();
+      }
+    }
+
+    task_counter++;
     //Wait for the next 1 second interval
     xTaskDelayUntil(&xLastWakeTime, 1000);
   }
